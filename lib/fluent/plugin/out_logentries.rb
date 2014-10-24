@@ -42,9 +42,8 @@ class LogentriesOutput < Fluent::BufferedOutput
 
     Dir[path << "*.token"].each do |file|
       key = File.basename(file, ".token") #remove path/extension from filename
-      tokens[key] = File.open(file, &:readline) #read the first line and close it
+      tokens[key] = File.open(file, &:readline).gsub(/\r\n|\r|\n/, '') #read the first line and close it
     end
-
     tokens
   end
 
