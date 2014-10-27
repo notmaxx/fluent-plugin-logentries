@@ -12,9 +12,6 @@ class LogentriesOutput < Fluent::BufferedOutput
 
   def configure(conf)
     super
-    @port   = conf['port']
-    @host   = conf['host']
-    @path   = conf['path']
   end
 
   def start
@@ -23,8 +20,6 @@ class LogentriesOutput < Fluent::BufferedOutput
 
   def shutdown
     super
-
-    client.close
   end
 
   def client
@@ -36,14 +31,16 @@ class LogentriesOutput < Fluent::BufferedOutput
     return [tag, record].to_msgpack
   end
 
-  # Scan a given directory for host tokens
+  # Scan a given directory for logentries tokens
   def generate_token(path)
     tokens = {}
 
-    Dir[path << "*.token"].each do |file|
+    Dir[path + "*.token"].each do |file|
       key = File.basename(file, ".token") #remove path/extension from filename
-      tokens[key] = File.open(file, &:readline).gsub(/\r\n|\r|\n/, '') #read the first line and close it
+      #read the first line, remove unwanted char and close it
+      tokens[key] = File.open(file, &:readline).gsub(/\r\n|\r|\n/, '')
     end
+
     tokens
   end
 
@@ -69,12 +66,12 @@ class LogentriesOutput < Fluent::BufferedOutput
       next if token.nil?
 
       if record.has_key?("message")
-        send(record["message"] << ' ' << token)
+        send_logentries(record["message"] + ' ' + token)
       end
     end
   end
 
-  def send(data)
+  def send_logentries(data)
     retries = 0
     begin
       client.puts data
