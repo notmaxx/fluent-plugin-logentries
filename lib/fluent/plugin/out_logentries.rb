@@ -26,7 +26,7 @@ class LogentriesOutput < Fluent::BufferedOutput
     @_socket ||= TCPSocket.new @host, @port
   end
 
-  # This method is called when an event reaches to Fluentd.
+  # This method is called when an event reaches Fluentd.
   def format(tag, time, record)
     return [tag, record].to_msgpack
   end
@@ -44,10 +44,13 @@ class LogentriesOutput < Fluent::BufferedOutput
     tokens
   end
 
-  # returns the correct token to use for a given tag
-  def get_token(tag, tokens)
+  # returns the correct token to use for a given tag / Records
+  def get_token(tag, record, tokens)
+    tag    ||= ""
+    record ||= ""
+
     tokens.each do |key, value|
-      if tag.index(key) != nil then
+      if tag.index(key) != nil || record.index(key) != nil then
         return value
       end
     end
@@ -62,7 +65,7 @@ class LogentriesOutput < Fluent::BufferedOutput
     chunk.msgpack_each do |tag, record|
       next unless record.is_a? Hash
 
-      token = get_token(tag, tokens)
+      token = get_token(tag, record, tokens)
       next if token.nil?
 
       if record.has_key?("message")
