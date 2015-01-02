@@ -1,5 +1,6 @@
 require 'socket'
-require 'YAML'
+require 'yaml'
+require 'openssl'
 
 class LogentriesOutput < Fluent::BufferedOutput
   class ConnectionFailure < StandardError; end
@@ -7,11 +8,10 @@ class LogentriesOutput < Fluent::BufferedOutput
   # and identifies the plugin in the configuration file.
   Fluent::Plugin.register_output('logentries', self)
 
-  config_param :host,           :string
-  config_param :port,           :integer, :default => 80
-  config_param :path,           :string
+  config_param :use_ssl,        :bool,    :default => true
+  config_param :no_ssl_port,    :integer, :default => 80
+  config_param :config_path,    :string
   config_param :max_retries,    :integer, :default => 3
-  config_param :use_ssl,        :bool,    :default => false
   config_param :tag_access_log, :string,  :default => 'logs-access'
   config_param :tag_error_log,  :string,  :default => 'logs-error'
 
@@ -34,7 +34,7 @@ class LogentriesOutput < Fluent::BufferedOutput
       ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
       ssl_client.connect
     else
-      TCPSocket.new @host, @port
+      TCPSocket.new "data.logentries.com", @no_ssl_port
     end
   end
 
@@ -45,7 +45,7 @@ class LogentriesOutput < Fluent::BufferedOutput
 
   # Create tokens hash
   def generate_token
-    YAML::load_file(@path)
+    YAML::load_file(@config_path)
   end
 
   # Returns the correct token to use for a given tag / records
@@ -66,6 +66,7 @@ class LogentriesOutput < Fluent::BufferedOutput
           else
             return value['app']
           end
+        end
       end
     end
 
