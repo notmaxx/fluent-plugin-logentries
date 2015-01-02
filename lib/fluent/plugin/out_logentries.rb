@@ -1,4 +1,5 @@
 require 'socket'
+require 'YAML'
 
 class LogentriesOutput < Fluent::BufferedOutput
   class ConnectionFailure < StandardError; end
@@ -9,6 +10,9 @@ class LogentriesOutput < Fluent::BufferedOutput
   config_param :host, :string
   config_param :port, :integer, :default => 80
   config_param :path, :string
+  config_param :max_retries, :integer, :default => 3
+  config_param :tag_access_log :string, :default => 'logs-access'
+  config_param :tag_error_log :string, :default => 'logs-error'
 
   def configure(conf)
     super
@@ -36,9 +40,8 @@ class LogentriesOutput < Fluent::BufferedOutput
     tokens = {}
 
     Dir[path + "*.token"].each do |file|
-      key = File.basename(file, ".token") #remove path/extension from filename
-      #read the first line, remove unwanted char and close it
-      tokens[key] = File.open(file, &:readline).gsub(/\r\n|\r|\n/, '')
+      key = File.basename(file, ".token") # Remove path/extension from filename
+      tokens[key] = YAML::load_file(file)
     end
 
     tokens
@@ -51,7 +54,17 @@ class LogentriesOutput < Fluent::BufferedOutput
 
     tokens.each do |key, value|
       if tag.index(key) != nil || record.index(key) != nil then
-        return value
+        if(value != Hash)
+          return value
+        else
+          case tag
+          when @tag_access_log
+            return value['access']
+          when @tag_error_log
+            return value['error']
+          else
+            return value['app']
+          end
       end
     end
 
@@ -79,11 +92,11 @@ class LogentriesOutput < Fluent::BufferedOutput
     begin
       client.puts data
     rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT => e
-      if retries < 2
+      if retries < @max_retries
         retries += 1
         @_socket = nil
         log.warn "Could not push logs to Logentries, resetting connection and trying again. #{e.message}"
-        sleep 2**retries
+        sleep 5**retries
         retry
       end
       raise ConnectionFailure, "Could not push logs to Logentries after #{retries} retries. #{e.message}"
