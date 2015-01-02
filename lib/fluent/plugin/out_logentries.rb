@@ -35,19 +35,12 @@ class LogentriesOutput < Fluent::BufferedOutput
     return [tag, record].to_msgpack
   end
 
-  # Scan a given directory for logentries tokens
-  def generate_token(path)
-    tokens = {}
-
-    Dir[path + "*.token"].each do |file|
-      key = File.basename(file, ".token") # Remove path/extension from filename
-      tokens[key] = YAML::load_file(file)
-    end
-
-    tokens
+  # Create tokens hash
+  def generate_token
+    YAML::load_file(@path)
   end
 
-  # returns the correct token to use for a given tag / Records
+  # Returns the correct token to use for a given tag / records
   def get_token(tag, record, tokens)
     tag    ||= ""
     record ||= ""
@@ -73,7 +66,7 @@ class LogentriesOutput < Fluent::BufferedOutput
 
   # NOTE! This method is called by internal thread, not Fluentd's main thread. So IO wait doesn't affect other plugins.
   def write(chunk)
-    tokens = generate_token(@path)
+    tokens = generate_token()
 
     chunk.msgpack_each do |tag, record|
       next unless record.is_a? Hash
