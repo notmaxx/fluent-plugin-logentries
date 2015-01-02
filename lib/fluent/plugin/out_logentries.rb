@@ -7,12 +7,13 @@ class LogentriesOutput < Fluent::BufferedOutput
   # and identifies the plugin in the configuration file.
   Fluent::Plugin.register_output('logentries', self)
 
-  config_param :host, :string
-  config_param :port, :integer, :default => 80
-  config_param :path, :string
-  config_param :max_retries, :integer, :default => 3
-  config_param :tag_access_log :string, :default => 'logs-access'
-  config_param :tag_error_log :string, :default => 'logs-error'
+  config_param :host,           :string
+  config_param :port,           :integer, :default => 80
+  config_param :path,           :string
+  config_param :max_retries,    :integer, :default => 3
+  config_param :use_ssl,        :bool,    :default => false
+  config_param :tag_access_log, :string,  :default => 'logs-access'
+  config_param :tag_error_log,  :string,  :default => 'logs-error'
 
   def configure(conf)
     super
@@ -27,7 +28,14 @@ class LogentriesOutput < Fluent::BufferedOutput
   end
 
   def client
-    @_socket ||= TCPSocket.new @host, @port
+    @_socket ||= if @use_ssl
+      context = OpenSSL::SSL::SSLContext.new
+      socket = TCPSocket.new "api.logentries.com", 20000
+      ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
+      ssl_client.connect
+    else
+      TCPSocket.new @host, @port
+    end
   end
 
   # This method is called when an event reaches Fluentd.
