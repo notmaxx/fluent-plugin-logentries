@@ -29,9 +29,10 @@ class LogentriesOutput < Fluent::BufferedOutput
 
   def client
     @_socket ||= if @use_ssl
-      context = OpenSSL::SSL::SSLContext.new
-      socket = TCPSocket.new "api.logentries.com", 20000
+      context    = OpenSSL::SSL::SSLContext.new
+      socket     = TCPSocket.new "api.logentries.com", 20000
       ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
+
       ssl_client.connect
     else
       TCPSocket.new "data.logentries.com", @no_ssl_port
@@ -45,27 +46,36 @@ class LogentriesOutput < Fluent::BufferedOutput
 
   # Create tokens hash
   def generate_token
-    YAML::load_file(@config_path)
+    begin
+      YAML::load_file(@config_path)
+    rescue Exception => e
+      log.warn "Could not load configuration. #{e.message}"
+    end
   end
 
   # Returns the correct token to use for a given tag / records
   def get_token(tag, record, tokens)
-    tag    ||= ""
-    record ||= ""
+    tag     ||= ""
+    message = record["message"]
 
+    # Config Structure
+    # -----------------------
+    # app-name:
+    #   app: TOKEN
+    #   access: TOKEN (optional)
+    #   error: TOKEN  (optional)
     tokens.each do |key, value|
-      if tag.index(key) != nil || record.index(key) != nil then
-        if(value != Hash)
-          return value
-        else
-          case tag
+      if tag.index(key) != nil || message.index(key) != nil then
+        default = value['app']
+
+        case tag
           when @tag_access_log
-            return value['access']
+            return value['access'] || default
           when @tag_error_log
-            return value['error']
+            return value['error']  || default
+
           else
-            return value['app']
-          end
+            return default
         end
       end
     end
@@ -76,16 +86,16 @@ class LogentriesOutput < Fluent::BufferedOutput
   # NOTE! This method is called by internal thread, not Fluentd's main thread. So IO wait doesn't affect other plugins.
   def write(chunk)
     tokens = generate_token()
+    return unless tokens.is_a? Hash
 
     chunk.msgpack_each do |tag, record|
       next unless record.is_a? Hash
+      next unless record.has_key? "message"
 
       token = get_token(tag, record, tokens)
       next if token.nil?
 
-      if record.has_key?("message")
-        send_logentries(record["message"] + ' ' + token)
-      end
+      send_logentries(token + ' ' + record["message"])
     end
   end
 
