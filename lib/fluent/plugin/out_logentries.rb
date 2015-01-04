@@ -17,6 +17,9 @@ class LogentriesOutput < Fluent::BufferedOutput
 
   def configure(conf)
     super
+
+    @tokens    = nil
+    @last_edit = Time.at(0)
   end
 
   def start
@@ -44,17 +47,25 @@ class LogentriesOutput < Fluent::BufferedOutput
     return [tag, record].to_msgpack
   end
 
-  # Create tokens hash
-  def generate_token
+  # Parse an YML file and generate a list of tokens.
+  # It will only re-generate the list on changes.
+  def generate_tokens_list
     begin
-      YAML::load_file(@config_path)
+      edit_time = File.mtime(@config_path)
+
+      if edit_time > @last_edit
+        @tokens    = YAML::load_file(@config_path)
+        @last_edit = edit_time
+
+        log.info "Token(s) list updated."
+      end
     rescue Exception => e
       log.warn "Could not load configuration. #{e.message}"
     end
   end
 
   # Returns the correct token to use for a given tag / records
-  def get_token(tag, record, tokens)
+  def get_token(tag, record)
     tag     ||= ""
     message = record["message"]
 
@@ -64,8 +75,8 @@ class LogentriesOutput < Fluent::BufferedOutput
     #   app: TOKEN
     #   access: TOKEN (optional)
     #   error: TOKEN  (optional)
-    tokens.each do |key, value|
-      if tag.index(key) != nil || message.index(key) != nil then
+    @tokens.each do |key, value|
+      if tag.index(key) != nil || message.index(key) != nil
         default = value['app']
 
         case tag
@@ -85,14 +96,14 @@ class LogentriesOutput < Fluent::BufferedOutput
 
   # NOTE! This method is called by internal thread, not Fluentd's main thread. So IO wait doesn't affect other plugins.
   def write(chunk)
-    tokens = generate_token()
-    return unless tokens.is_a? Hash
+    generate_tokens_list()
+    return unless @tokens.is_a? Hash
 
     chunk.msgpack_each do |tag, record|
       next unless record.is_a? Hash
       next unless record.has_key? "message"
 
-      token = get_token(tag, record, tokens)
+      token = get_token(tag, record)
       next if token.nil?
 
       send_logentries(token + ' ' + record["message"])
