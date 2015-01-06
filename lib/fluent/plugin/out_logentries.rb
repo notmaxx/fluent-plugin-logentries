@@ -67,7 +67,7 @@ class LogentriesOutput < Fluent::BufferedOutput
   # Returns the correct token to use for a given tag / records
   def get_token(tag, record)
     tag     ||= ""
-    message = record["message"]
+    app_name = record["app_name"] || ""
 
     # Config Structure
     # -----------------------
@@ -76,12 +76,12 @@ class LogentriesOutput < Fluent::BufferedOutput
     #   access: TOKEN (optional)
     #   error: TOKEN  (optional)
     @tokens.each do |key, value|
-      if tag.index(key) != nil || message.index(key) != nil
+      if tag.index(key) != nil || app_name.index(key) != nil
         default = value['app']
 
         case tag
           when @tag_access_log
-            return value['access'] || default
+            return value['access'] || default
           when @tag_error_log
             return value['error']  || default
 
