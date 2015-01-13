@@ -25,7 +25,7 @@ install with gem or fluent-gem command as:
        access: 5deab21c-04b1-9122-abdc-09adb2eda22 (*)
        error: 9acfbeba-c92c-1229-ccac-12c58d82ecc (*)
 ```
-(*) `access` and `error` are optional, if you don't use multiple log per host just provide an app token.
+(*) `access` and `error are optional, if you don't use multiple log per host just provide an app token.
 
 This file is read everytime the buffer is flushed, it allows on fly modifications.
 ## Usage
@@ -45,11 +45,14 @@ The value must be `logentries`.
 ### config_path (required)
 Path of your configuration file, e.g. `/opt/logentries/tokens.conf`
 
+### protocol
+The default is `tcp`.
+
 ### use_ssl
 Enable/disable SSL for data transfers between Fluentd and Logentries. The default is `true`.
 
-### no_ssl_port
-Only in case you don't use SSL, the value must be `80`, `514`, or `10000`. The default is `80`
+### port
+Only in case you don't use SSL, the value must be `80`, `514`, or `10000`. The default is `20000` (SSL)
 
 ### max_retries
 Number of retries on failure.
