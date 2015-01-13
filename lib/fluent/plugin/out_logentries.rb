@@ -9,11 +9,15 @@ class LogentriesOutput < Fluent::BufferedOutput
   Fluent::Plugin.register_output('logentries', self)
 
   config_param :use_ssl,        :bool,    :default => true
-  config_param :no_ssl_port,    :integer, :default => 80
+  config_param :port,           :integer, :default => 20000
+  config_param :protocol,       :string,  :default => 'tcp'
   config_param :config_path,    :string
   config_param :max_retries,    :integer, :default => 3
   config_param :tag_access_log, :string,  :default => 'logs-access'
   config_param :tag_error_log,  :string,  :default => 'logs-error'
+
+  SSL_HOST    = "api.logentries.com"
+  NO_SSL_HOST = "data.logentries.com"
 
   def configure(conf)
     super
@@ -33,12 +37,19 @@ class LogentriesOutput < Fluent::BufferedOutput
   def client
     @_socket ||= if @use_ssl
       context    = OpenSSL::SSL::SSLContext.new
-      socket     = TCPSocket.new "api.logentries.com", 20000
+      socket     = TCPSocket.new SSL_HOST, @port
       ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
 
       ssl_client.connect
     else
-      TCPSocket.new "data.logentries.com", @no_ssl_port
+      if @protocol == 'tcp'
+        TCPSocket.new NO_SSL_HOST, @port
+      else
+        udp_client = UDPSocket.new
+        udp_client.connect NO_SSL_HOST, @port
+
+        udp_client
+      end
     end
   end
 
@@ -105,14 +116,15 @@ class LogentriesOutput < Fluent::BufferedOutput
       token = get_token(tag, record)
       next if token.nil?
 
-      send_logentries(token + ' ' + record["message"])
+      message = record["message"];
+      send_logentries("#{token} #{message} \n")
     end
   end
 
   def send_logentries(data)
     retries = 0
     begin
-      client.puts data
+      client.write data
     rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT => e
       if retries < @max_retries
         retries += 1
