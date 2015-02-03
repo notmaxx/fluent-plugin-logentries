@@ -77,7 +77,7 @@ class LogentriesOutput < Fluent::BufferedOutput
 
   # Returns the correct token to use for a given tag / records
   def get_token(tag, record)
-    app_name = record["app_name"] || ""
+    app_name = record["app_name"] || record["message"]
 
     # Config Structure
     # -----------------------
