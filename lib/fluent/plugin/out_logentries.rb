@@ -9,6 +9,7 @@ class LogentriesOutput < Fluent::BufferedOutput
   Fluent::Plugin.register_output('logentries', self)
 
   config_param :use_ssl,        :bool,    :default => true
+  config_param :use_json        :bool,    :default => false
   config_param :port,           :integer, :default => 20000
   config_param :protocol,       :string,  :default => 'tcp'
   config_param :config_path,    :string
@@ -116,7 +117,7 @@ class LogentriesOutput < Fluent::BufferedOutput
       token = get_token(tag, record)
       next if token.nil?
 
-      message = record["message"];
+      message = @use_json ? record.to_json : record["message"]
       send_logentries("#{token} #{message} \n")
     end
   end
