@@ -20,14 +20,14 @@ install with gem or fluent-gem command as:
        app: MY-LOGENTRIES-TOKEN
        access: ANOTHER-LOGENTRIES-TOKEN (*)
        error: ANOTHER-LOGENTRIES-TOKEN-1 (*)
-    Foo:
+    Another-app:
        app: 2bfbea1e-10c3-4419-bdad-7e6435882e1f
        access: 5deab21c-04b1-9122-abdc-09adb2eda22 (*)
        error: 9acfbeba-c92c-1229-ccac-12c58d82ecc (*)
 ```
-(*) `access` and `error are optional, if you don't use multiple log per host just provide an app token.
+(*) `access` and `error` are optional, if you don't use multiple log per host just provide an app token.
 
-This file is read everytime the buffer is flushed, it allows on fly modifications.
+This file is read on changes, it allows on fly modifications.
 ## Usage
 
 ```
