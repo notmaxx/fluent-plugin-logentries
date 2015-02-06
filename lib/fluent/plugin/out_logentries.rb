@@ -116,7 +116,8 @@ class LogentriesOutput < Fluent::BufferedOutput
       token = get_token(tag, record)
       next if token.nil?
 
-      message = record["message"];
+      # Clean up the string to avoid blank line in logentries
+      message = record["message"].rstrip()
       send_logentries("#{token} #{message} \n")
     end
   end
