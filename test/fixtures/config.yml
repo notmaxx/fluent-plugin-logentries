@@ -1,0 +1,23 @@
+---
+first-app:
+  app: '000-00-000'
+
+secondApp:
+  app: '111-00-000'
+  access: '111-00-111'
+
+third@pp:
+  app: '222-00-000'
+  access: '222-00-111'
+  error: '222-00-222'
+
+Foo:
+  prod:
+    app: '333-00-000'
+
+Bar:
+  prod:
+    app: '444-00-000'
+  test:
+    app: '444-11-000'
+    access: '444-11-111'
