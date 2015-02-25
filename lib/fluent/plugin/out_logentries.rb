@@ -2,7 +2,7 @@ require 'socket'
 require 'yaml'
 require 'openssl'
 
-class LogentriesOutput < Fluent::BufferedOutput
+class Fluent::LogentriesOutput < Fluent::BufferedOutput
   class ConnectionFailure < StandardError; end
   # First, register the plugin. NAME is the name of this plugin
   # and identifies the plugin in the configuration file.
@@ -11,11 +11,16 @@ class LogentriesOutput < Fluent::BufferedOutput
   config_param :use_ssl,        :bool,    :default => true
   config_param :port,           :integer, :default => 20000
   config_param :protocol,       :string,  :default => 'tcp'
-  config_param :config_path,    :string
   config_param :max_retries,    :integer, :default => 3
+  # Logentries config file
+  config_param :config_path,    :string
   config_param :tag_access_log, :string,  :default => 'logs-access'
   config_param :tag_error_log,  :string,  :default => 'logs-error'
+  config_param :env_tag,        :array,   :default => ['prod', 'test']
+  config_param :env_prefix,     :string,  :default => '--'
 
+
+  # Logentries Endpoints
   SSL_HOST    = "api.logentries.com"
   NO_SSL_HOST = "data.logentries.com"
 
@@ -83,10 +88,29 @@ class LogentriesOutput < Fluent::BufferedOutput
     # -----------------------
     # app-name:
     #   app: TOKEN
-    #   access: TOKEN (optional)
-    #   error: TOKEN  (optional)
+    #   access: TOKEN2 (optional)
+    #   error: TOKEN3  (optional)
+    #
+    # or
+    # app-name:
+    #   {#env_tag}:
+    #     app: TOKEN
+    #     access: TOKEN2 (optional)
+    #     error: TOKEN3  (optional)
+    #
     @tokens.each do |key, value|
       if tag.index(key) != nil || app_name.index(key) != nil
+
+        # Seconds case of configuration
+        if(value.keys - @env_tag).empty?
+          value.keys.each do | env |
+            key = "#{@env_prefix}#{env}" # --prod / --test
+            if tag.index(key) != nil || app_name.index(key) != nil
+              value = value[env] # Flat the hash
+            end
+          end
+        end
+
         default = value['app']
 
         case tag
