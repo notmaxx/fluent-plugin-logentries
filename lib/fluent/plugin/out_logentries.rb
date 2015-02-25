@@ -118,14 +118,15 @@ class LogentriesOutput < Fluent::BufferedOutput
 
       # Clean up the string to avoid blank line in logentries
       message = record["message"].rstrip()
-      send_logentries("#{token} #{message} \n")
+      send_logentries(token, message)
+
     end
   end
 
-  def send_logentries(data)
+  def send_logentries(token, data)
     retries = 0
     begin
-      client.write data
+      client.write("#{token} #{data} \n")
     rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT => e
       if retries < @max_retries
         retries += 1
@@ -135,6 +136,12 @@ class LogentriesOutput < Fluent::BufferedOutput
         retry
       end
       raise ConnectionFailure, "Could not push logs to Logentries after #{retries} retries. #{e.message}"
+    rescue Errno::EMSGSIZE
+      str_length = data.length
+      send_logentries(token, str[0..str_length/2])
+      send_logentries(token, str[(str_length/2)+1..str.length])
+
+      log.warm "Message Too Long, re-sending it in two part..."
     end
   end
 
