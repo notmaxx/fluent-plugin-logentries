@@ -77,7 +77,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
 
   # Returns the correct token to use for a given tag / records
   def get_token(tag, record)
-    app_name = record["app_name"] || record["message"]
+    app_name = record["app_name"] || ''
 
     # Config Structure
     # -----------------------
@@ -138,8 +138,8 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
       raise ConnectionFailure, "Could not push logs to Logentries after #{retries} retries. #{e.message}"
     rescue Errno::EMSGSIZE
       str_length = data.length
-      send_logentries(token, str[0..str_length/2])
-      send_logentries(token, str[(str_length/2)+1..str.length])
+      send_logentries(token, data[0..str_length/2])
+      send_logentries(token, data[(str_length/2)+1..str_length])
 
       log.warm "Message Too Long, re-sending it in two part..."
     end
