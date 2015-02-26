@@ -2,7 +2,7 @@ require 'socket'
 require 'yaml'
 require 'openssl'
 
-class LogentriesOutput < Fluent::BufferedOutput
+class Fluent::LogentriesOutput < Fluent::BufferedOutput
   class ConnectionFailure < StandardError; end
   # First, register the plugin. NAME is the name of this plugin
   # and identifies the plugin in the configuration file.
@@ -86,7 +86,7 @@ class LogentriesOutput < Fluent::BufferedOutput
     #   access: TOKEN (optional)
     #   error: TOKEN  (optional)
     @tokens.each do |key, value|
-      if tag.index(key) != nil || app_name.index(key) != nil
+      if tag.index(key) != nil || app_name == key
         default = value['app']
 
         case tag
