@@ -141,7 +141,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
       send_logentries(token, data[0..str_length/2])
       send_logentries(token, data[(str_length/2)+1..str_length])
 
-      log.warm "Message Too Long, re-sending it in two part..."
+      log.warn "Message Too Long, re-sending it in two part..."
     end
   end
 

@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "fluent-plugin-logentries"
-  spec.version       = "0.2.8"
+  spec.version       = "0.2.9"
   spec.authors       = ["Woorank"]
   spec.email         = ["dev@woorank.com"]
   spec.summary       = "Logentries output plugin for Fluent event collector"
