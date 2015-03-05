@@ -86,7 +86,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
     #   access: TOKEN (optional)
     #   error: TOKEN  (optional)
     @tokens.each do |key, value|
-      if tag.index(key) != nil || app_name == key
+      if app_name == key || tag.index(key) != nil
         default = value['app']
 
         case tag
