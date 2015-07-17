@@ -16,6 +16,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
   config_param :max_retries,    :integer, :default => 3
   config_param :tag_access_log, :string,  :default => 'logs-access'
   config_param :tag_error_log,  :string,  :default => 'logs-error'
+  config_param :default_token,  :string,  :default => nil
 
   SSL_HOST    = "api.logentries.com"
   NO_SSL_HOST = "data.logentries.com"
@@ -102,7 +103,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
       end
     end
 
-    return nil
+    return default_token
   end
 
   # NOTE! This method is called by internal thread, not Fluentd's main thread. So IO wait doesn't affect other plugins.
