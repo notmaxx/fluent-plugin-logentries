@@ -9,12 +9,14 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
   Fluent::Plugin.register_output('logentries', self)
 
   config_param :use_ssl,        :bool,    :default => true
+  config_param :use_json,       :bool,    :default => false
   config_param :port,           :integer, :default => 20000
   config_param :protocol,       :string,  :default => 'tcp'
   config_param :config_path,    :string
   config_param :max_retries,    :integer, :default => 3
   config_param :tag_access_log, :string,  :default => 'logs-access'
   config_param :tag_error_log,  :string,  :default => 'logs-error'
+  config_param :default_token,  :string,  :default => nil
 
   SSL_HOST    = "api.logentries.com"
   NO_SSL_HOST = "data.logentries.com"
@@ -101,7 +103,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
       end
     end
 
-    return nil
+    return default_token
   end
 
   # NOTE! This method is called by internal thread, not Fluentd's main thread. So IO wait doesn't affect other plugins.
@@ -111,15 +113,14 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
 
     chunk.msgpack_each do |tag, record|
       next unless record.is_a? Hash
-      next unless record.has_key? "message"
+      next unless @use_json or record.has_key? "message"
 
       token = get_token(tag, record)
       next if token.nil?
 
       # Clean up the string to avoid blank line in logentries
-      message = record["message"].rstrip()
+      message = @use_json ? record.to_json : record["message"].rstrip()
       send_logentries(token, message)
-
     end
   end
 
@@ -127,7 +128,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
     retries = 0
     begin
       client.write("#{token} #{data} \n")
-    rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT => e
+    rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, Errno::EPIPE => e
       if retries < @max_retries
         retries += 1
         @_socket = nil
