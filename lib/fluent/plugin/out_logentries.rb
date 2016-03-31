@@ -128,7 +128,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
     retries = 0
     begin
       client.write("#{token} #{data} \n")
-    rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, Errno::EPIPE => e
+    rescue Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::ECONNABORTED, Errno::ETIMEDOUT, Errno::EPIPE => e
       if retries < @max_retries
         retries += 1
         @_socket = nil
