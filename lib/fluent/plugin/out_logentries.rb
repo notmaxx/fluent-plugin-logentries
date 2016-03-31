@@ -6,7 +6,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
   class ConnectionFailure < StandardError; end
   # First, register the plugin. NAME is the name of this plugin
   # and identifies the plugin in the configuration file.
-  Fluent::Plugin.register_output('logentries', self)
+  Fluent::Plugin.register_output('logentries-tmpfix', self)
 
   config_param :use_ssl,        :bool,    :default => true
   config_param :use_json,       :bool,    :default => false
