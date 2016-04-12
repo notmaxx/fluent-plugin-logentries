@@ -128,7 +128,13 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
     retries = 0
     begin
       client.write("#{token} #{data} \n")
-    rescue Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::ECONNABORTED, Errno::ETIMEDOUT, Errno::EPIPE => e
+    rescue Errno::EMSGSIZE
+      str_length = data.length
+      send_logentries(token, data[0..str_length/2])
+      send_logentries(token, data[(str_length/2)+1..str_length])
+
+      log.warn "Message Too Long, re-sending it in two part..."
+    rescue => e
       if retries < @max_retries
         retries += 1
         @_socket = nil
@@ -137,12 +143,6 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
         retry
       end
       raise ConnectionFailure, "Could not push logs to Logentries after #{retries} retries. #{e.message}"
-    rescue Errno::EMSGSIZE
-      str_length = data.length
-      send_logentries(token, data[0..str_length/2])
-      send_logentries(token, data[(str_length/2)+1..str_length])
-
-      log.warn "Message Too Long, re-sending it in two part..."
     end
   end
 
