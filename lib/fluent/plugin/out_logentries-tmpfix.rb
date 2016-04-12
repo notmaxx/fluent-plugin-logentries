@@ -20,6 +20,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
 
   SSL_HOST    = "api.logentries.com"
   NO_SSL_HOST = "data.logentries.com"
+  HOSTNAME    = `hostname`.strip
 
   def configure(conf)
     super
@@ -127,7 +128,7 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
   def send_logentries(token, data)
     retries = 0
     begin
-      client.write("#{token} #{data} \n")
+      client.write("#{token} #{HOSTNAME} #{data} \n")
     rescue Errno::EMSGSIZE
       str_length = data.length
       send_logentries(token, data[0..str_length/2])
