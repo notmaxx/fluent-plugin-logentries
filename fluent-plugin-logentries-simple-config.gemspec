@@ -3,12 +3,12 @@ lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
-  spec.name          = "fluent-plugin-logentries-tmpfix"
-  spec.version       = "0.2.13"
-  spec.authors       = ["bigwheel"]
+  spec.name          = "fluent-plugin-logentries-simple-config"
+  spec.version       = "0.2.14"
+  spec.authors       = ["notmaxx"]
   spec.email         = ["example@example.com"]
-  spec.summary       = "Logentries output plugin for Fluent event collector"
-  spec.homepage      = "https://github.com/bigwheel/fluent-plugin-logentries"
+  spec.summary       = "Logentries output plugin for Fluent event without Logentries config file"
+  spec.homepage      = "https://github.com/notmaxx/fluent-plugin-logentries"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")

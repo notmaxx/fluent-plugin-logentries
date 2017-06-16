@@ -8,42 +8,27 @@ Looks at the tag/message to find out where the log should go.
 install with gem or fluent-gem command as:
 
 ### native gem
-    $ gem install fluent-plugin-logentries
+    $ gem install fluent-plugin-logentries-simple-config
 
 ### fluentd gem
-    $ /opt/td-agent/embedded/bin/fluent-gem install fluent-plugin-logentries
+    $ /opt/td-agent/embedded/bin/fluent-gem install fluent-plugin-logentries-simple-config
 
-## Configruation file (YML)
-
-```yaml
-    My-Awesome-App:
-       app: MY-LOGENTRIES-TOKEN
-       access: ANOTHER-LOGENTRIES-TOKEN (*)
-       error: ANOTHER-LOGENTRIES-TOKEN-1 (*)
-    Another-app:
-       app: 2bfbea1e-10c3-4419-bdad-7e6435882e1f
-       access: 5deab21c-04b1-9122-abdc-09adb2eda22 (*)
-       error: 9acfbeba-c92c-1229-ccac-12c58d82ecc (*)
-```
-(*) `access` and `error` are optional, if you don't use multiple log per host just provide an app token.
-
-This file is read on changes, it allows on fly modifications.
 ## Usage
 
 ```
     <match pattern>
       type logentries
-      config_path /path/to/logentries-tokens.conf
+      token ACBD-....
     </match>
 ```
 
 ## Parameters
 
 ### type (required)
-The value must be `logentries`.
+The value must be `logentries-simple-config`.
 
-### config_path (required)
-Path of your configuration file, e.g. `/opt/logentries/tokens.conf`
+### token (required)
+Logentries token.
 
 ### protocol
 The default is `tcp`.
@@ -57,12 +42,9 @@ Only in case you don't use SSL, the value must be `80`, `514`, or `10000`. The d
 ### max_retries
 Number of retries on failure.
 
-### tag_access_log, tag_error_log
-This is use in case you tag your access/error log and want them to be push into another log.
-
 ## Contributing
 
-1. Fork it ( http://github.com/woorank/fluent-plugin-logentries/fork )
+1. Fork it ( http://github.com/notmaxx/fluent-plugin-logentries/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

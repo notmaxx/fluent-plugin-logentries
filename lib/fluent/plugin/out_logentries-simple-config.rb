@@ -6,17 +6,14 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
   class ConnectionFailure < StandardError; end
   # First, register the plugin. NAME is the name of this plugin
   # and identifies the plugin in the configuration file.
-  Fluent::Plugin.register_output('logentries-tmpfix', self)
+  Fluent::Plugin.register_output('logentries-simple-config', self)
 
   config_param :use_ssl,        :bool,    :default => true
   config_param :use_json,       :bool,    :default => false
   config_param :port,           :integer, :default => 20000
   config_param :protocol,       :string,  :default => 'tcp'
-  config_param :config_path,    :string
+  config_param :token,          :string
   config_param :max_retries,    :integer, :default => 3
-  config_param :tag_access_log, :string,  :default => 'logs-access'
-  config_param :tag_error_log,  :string,  :default => 'logs-error'
-  config_param :default_token,  :string,  :default => nil
 
   SSL_HOST    = "api.logentries.com"
   NO_SSL_HOST = "data.logentries.com"
@@ -61,67 +58,18 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
     return [tag, record].to_msgpack
   end
 
-  # Parse an YML file and generate a list of tokens.
-  # It will only re-generate the list on changes.
-  def generate_tokens_list
-    begin
-      edit_time = File.mtime(@config_path)
-
-      if edit_time > @last_edit
-        @tokens    = YAML::load_file(@config_path)
-        @last_edit = edit_time
-
-        log.info "Token(s) list updated."
-      end
-    rescue Exception => e
-      log.warn "Could not load configuration. #{e.message}"
-    end
-  end
-
-  # Returns the correct token to use for a given tag / records
-  def get_token(tag, record)
-    app_name = record["app_name"] || ''
-
-    # Config Structure
-    # -----------------------
-    # app-name:
-    #   app: TOKEN
-    #   access: TOKEN (optional)
-    #   error: TOKEN  (optional)
-    @tokens.each do |key, value|
-      if app_name == key || tag.index(key) != nil
-        default = value['app']
-
-        case tag
-          when @tag_access_log
-            return value['access'] || default
-          when @tag_error_log
-            return value['error']  || default
-
-          else
-            return default
-        end
-      end
-    end
-
-    return default_token
-  end
-
   # NOTE! This method is called by internal thread, not Fluentd's main thread. So IO wait doesn't affect other plugins.
   def write(chunk)
     generate_tokens_list()
-    return unless @tokens.is_a? Hash
+    return if @token.blank?
 
     chunk.msgpack_each do |tag, record|
       next unless record.is_a? Hash
       next unless @use_json or record.has_key? "message"
 
-      token = get_token(tag, record)
-      next if token.nil?
-
       # Clean up the string to avoid blank line in logentries
       message = @use_json ? record.to_json : record["message"].rstrip()
-      send_logentries(token, message)
+      send_logentries(@token, message)
     end
   end
 
