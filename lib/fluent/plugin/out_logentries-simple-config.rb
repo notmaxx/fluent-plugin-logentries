@@ -21,9 +21,6 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
 
   def configure(conf)
     super
-
-    @tokens    = nil
-    @last_edit = Time.at(0)
   end
 
   def start
@@ -60,7 +57,6 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
 
   # NOTE! This method is called by internal thread, not Fluentd's main thread. So IO wait doesn't affect other plugins.
   def write(chunk)
-    generate_tokens_list()
     return if @token.blank?
 
     chunk.msgpack_each do |tag, record|

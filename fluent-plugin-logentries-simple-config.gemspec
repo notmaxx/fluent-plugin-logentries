@@ -7,8 +7,9 @@ Gem::Specification.new do |spec|
   spec.version       = "0.2.14"
   spec.authors       = ["notmaxx"]
   spec.email         = ["example@example.com"]
-  spec.summary       = "Logentries output plugin for Fluent event without Logentries config file"
+  spec.summary       = "Logentries output plugin for Fluent event"
   spec.homepage      = "https://github.com/notmaxx/fluent-plugin-logentries"
+  spec.description   = "Logentries output plugin for Fluent event without Logentries config file, just with simple token"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")

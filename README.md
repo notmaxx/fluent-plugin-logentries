@@ -1,5 +1,5 @@
 # Fluent::Plugin::Logentries
-Forward logs to Logentries, using token based input.
+Forward logs to Logentries.
 
 Looks at the tag/message to find out where the log should go.
 
