@@ -17,7 +17,7 @@ install with gem or fluent-gem command as:
 
 ```
     <match pattern>
-      type logentries
+      @type logentries-simple-config
       token ACBD-....
     </match>
 ```
