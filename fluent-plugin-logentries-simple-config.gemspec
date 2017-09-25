@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "fluent-plugin-logentries-simple-config"
-  spec.version       = "0.2.14a"
+  spec.version       = "0.2.14l"
   spec.authors       = ["notmaxx"]
   spec.email         = ["example@example.com"]
   spec.summary       = "Logentries output plugin for Fluent event"
@@ -18,5 +18,4 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_development_dependency "bundler", "~> 1.5"
-  spec.add_development_dependency "rake"
 end

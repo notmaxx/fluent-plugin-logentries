@@ -60,10 +60,42 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
 
     chunk.msgpack_each do |tag, record|
       next unless record.is_a? Hash
-      next unless @use_json or record.has_key? "message"
 
-      # Clean up the string to avoid blank line in logentries
-      message = @use_json ? record.to_json : record["message"].rstrip()
+      message = if @use_json
+        record.to_json
+      else
+        r = record.dup
+        r.merge!({ "tag" => tag }) if tag.present?
+        # main message
+        msg = (r.delete('message')&.to_s&.rstrip || '')
+        # time
+        t = if r['time'].is_a?(String)
+          Time.parse(r['time']).strftime('%Y-%m-%dT%H:%M:%S.%6N%:z')
+        elsif r['time'].is_a?(Time)
+          r['time'].strftime('%Y-%m-%dT%H:%M:%S.%6N%:z')
+        else
+          ''
+        end
+        # application & role
+        app, role = if r['kubernetes_pod'].is_a?(String) && (fullapp = r['kubernetes_pod'].split('-')).present?
+          [fullapp[0], fullapp[1..fullapp.size-1].join('-')]
+        else
+          [nil, nil]
+        end
+        # custom prefix built from application and role
+        prefix = if app.present? && role.present? && t.present?
+          pid = '<000>0'
+          spacer = ' - - '
+          "#{pid} #{t} #{app} #{role} #{spacer} "
+        else
+          ""
+        end
+        # extra tags
+        tags = r.map{ |k,v| "#{k}: #{v}" }.join(', ')
+        # final message
+        prefix + msg + (tags.present? && msg.present? ? ", " + tags : tags)
+      end
+
       send_logentries(@token, message)
     end
   end
