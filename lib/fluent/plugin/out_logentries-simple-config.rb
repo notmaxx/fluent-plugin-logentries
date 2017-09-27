@@ -93,7 +93,6 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
         record.to_json
       else
         r = record.dup
-        r.merge!({ "tag" => tag }) if tag.present?
         # main message
         msg = (r.delete('message')&.to_s&.rstrip || '')
         # time
@@ -113,16 +112,16 @@ class Fluent::LogentriesOutput < Fluent::BufferedOutput
         # custom prefix built from application and role
         prefix = if app.present? && role.present? && t.present?
           le_app_token = @app_tokens[app]
-          pid = '<000>0'
-          spacer = ' - - '
-          "#{pid} #{t} #{app} #{role} #{spacer} "
+          r.delete('time')
+          r.delete('kubernetes_pod')
+          "#{t} #{app} #{role} "
         else
           ""
         end
         # extra tags
         tags = r.map{ |k,v| "#{k}: #{v}" }.join(', ')
         # final message
-        prefix + msg + (tags.present? && msg.present? ? ", " + tags : tags)
+        prefix + msg + (tags.present? && msg.present? ? (",\t\t" + tags) : tags)
       end
 
       send_logentries(le_app_token || @token, message)

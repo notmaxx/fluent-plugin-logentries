@@ -4,9 +4,9 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "fluent-plugin-logentries-simple-config"
-  spec.version       = "0.2.14v"
+  spec.version       = "0.2.14y"
   spec.authors       = ["notmaxx"]
-  spec.email         = ["example@example.com"]
+  spec.email         = ["notmaxx@gmail.com"]
   spec.summary       = "Logentries output plugin for Fluent event"
   spec.homepage      = "https://github.com/notmaxx/fluent-plugin-logentries"
   spec.description   = "Logentries output plugin for Fluent event without Logentries config file, just with simple token"
